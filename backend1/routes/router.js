@@ -22,9 +22,9 @@ router.delete('/users/:Id', userController.deleteUser);
  
 // pour statuts d'user:
 // route pour ajouter une statuts à l'user 
-router.post('/users/:Id/status', userController.addStatus);//
+router.post('/users/:Id/status', userController.addOrUpdateStatusDate);// carte RFID 
 // route poure mofifier la statuts du'user 
-router.put ('/users/:Id/status', userController.updateStatus);
+router.put ('/users/:Id/status', userController.updateStatus); //dashboard prof 
 
 
 // Routes pour l'administration//

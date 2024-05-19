@@ -69,10 +69,7 @@ const login = async (req, res) => {
 // Fonction pour récupérer tous les utilisateurs (professeurs ou étudiants)
 const getUsers = async (req, res) => {
   try {
-    // Vérifier si le corps de la requête est vide
-   // if (!req.body || Object.keys(req.body).length === 0) {
-     // return res.status(400).json({ message: "Le corps de la requête est vide." });
-    //}
+   
 
     // Parser le corps de la requête JSON
     const users = await User.find();
@@ -153,59 +150,62 @@ const deleteUser = async (req, res) => {
   }
 };
 
-
-
-
-
-
-//fonction pour modifier la statuts d'user 
 const updateStatus = async (req, res) => {
   try {
-    const Id = req.body.Id;
-    const { status } = req.body;
-
-    // Récupérer les données des sessions à partir de la requête
-    const { session1, session2, session3, session4 } = status;
+    const { Id, date, session1, session2, session3, session4 } = req.body;
 
     // Trouver l'utilisateur dans la base de données
     const user = await User.findOne({ Id });
-    console.log("ID reçu :", Id); 
-    console.log('status recu :',status)
 
     // Vérifier si l'utilisateur existe
     if (!user) {
       return res.status(404).json({ message: "Utilisateur non trouvé" });
     }
 
-    // Mettre à jour les données de chaque session si elles existent dans la requête
+    let dateExists = false;
+    let existingDate;
+    
+    // Parcourir tous les objets status pour trouver la date
+    user.status.forEach(statusObj => {
+      const foundDate = statusObj.dates.find(entry => entry.date.toISOString() === new Date(date).toISOString());
+      if (foundDate) {
+        dateExists = true;
+        existingDate = foundDate;
+      }
+    });
+
+    // Si la date n'existe pas, renvoyer un message d'erreur
+    if (!dateExists) {
+      return res.status(404).json({ message: "La date spécifiée n'existe pas" });
+    }
+
+    // Mettre à jour les sessions si la date existe
     if (session1) {
-      user.status.session1.room1 = session1.room1 || user.status.session1.room1;
-      user.status.session1.etats1 = session1.etats1 || user.status.session1.etats1;
+      existingDate.session1.room1 = session1.room1 || existingDate.session1.room1;
+      existingDate.session1.etats1 = session1.etats1 || existingDate.session1.etats1;
     }
 
     if (session2) {
-      user.status.session2.room2 = session2.room2 || user.status.session2.room2;
-      user.status.session2.etats2 = session2.etats2 || user.status.session2.etats2;
+      existingDate.session2.room2 = session2.room2 || existingDate.session2.room2;
+      existingDate.session2.etats2 = session2.etats2 || existingDate.session2.etats2;
     }
 
     if (session3) {
-      user.status.session3.room3 = session3.room3 || user.status.session3.room3;
-      user.status.session3.etats3 = session3.etats3 || user.status.session3.etats3;
+      existingDate.session3.room3 = session3.room3 || existingDate.session3.room3;
+      existingDate.session3.etats3 = session3.etats3 || existingDate.session3.etats3;
     }
 
     if (session4) {
-      user.status.session4.room4 = session4.room4 || user.status.session4.room4;
-      user.status.session4.etats4 = session4.etats4 || user.status.session4.etats4;
+      existingDate.session4.room4 = session4.room4 || existingDate.session4.room4;
+      existingDate.session4.etats4 = session4.etats4 || existingDate.session4.etats4;
     }
 
     // Sauvegarder les modifications de l'utilisateur
     const updatedUser = await user.save();
 
-
     // Répondre avec l'utilisateur mis à jour
     res.status(200).json(updatedUser);
-   
-    console.log("la statuts modifier avec succsé")
+
   } catch (error) {
     // Gérer les erreurs
     res.status(500).json({ message: error.message });
@@ -214,36 +214,58 @@ const updateStatus = async (req, res) => {
 
 
 // fonction pour ajouter statuts a un utilisateur
-const addStatus = async (req, res) => {
+
+
+const addOrUpdateStatusDate = async (req, res) => {
+  const { uId, date, session1, session2, session3, session4 } = req.body;
+
   try {
-    const uId = req.body.uId;
-    const { session, room, etats } = req.body;
+    // Recherche de l'utilisateur par uId
+    let user = await User.findOne({ uId });
 
-    // Recherche de l'utilisateur dans la base de données
-    const user = await User.findOne({ uId: uId });
-
-    // Vérifier si l'utilisateur existe
     if (!user) {
-      return res.status(404).json({ message: "Utilisateur non trouvé" });
+      return res.status(404).json({ message: "Utilisateur non trouvé." });
     }
 
-    // Vérifier si la session spécifiée existe dans le schéma
-    if (!user.status[`session${session}`]) {
-      return res.status(400).json({ message: `Session ${session} n'existe pas` });
+    let dateExists = false;
+    // Vérification si la date existe déjà dans le tableau dates
+    user.status.forEach(statusObj => {
+      statusObj.dates.forEach(existingDate => {
+        console.log("Existing Date:", existingDate.date.toISOString());
+        console.log("Provided Date:", new Date(date).toISOString());
+        if (existingDate.date.toISOString() === new Date(date).toISOString()) {
+          // La date existe déjà, mise à jour des sessions
+          dateExists = true;
+          console.log("Date trouvée ! Mise à jour des sessions.");
+          existingDate.session1 = session1 || existingDate.session1;
+          existingDate.session2 = session2 || existingDate.session2;
+          existingDate.session3 = session3 || existingDate.session3;
+          existingDate.session4 = session4 || existingDate.session4;
+        }
+      });
+    });
+
+    // Si la date n'existe pas, créer un nouvel objet dates
+    if (!dateExists) {
+      const newDate = {
+        date: new Date(date).toISOString(),
+        session1: session1 || {},
+        session2: session2 || {},
+        session3: session3 || {},
+        session4: session4 || {}
+      };
+      user.status.push({ dates: [newDate] });
+      console.log("Date non trouvée. Création d'un nouvel objet dates.");
+      console.log( "donner recu avec la requette :",newDate , uId);
     }
 
-    // Mettre à jour la salle et l'état de la session spécifiée
-    user.status[`session${session}`][`room${session}`] = room;
-    user.status[`session${session}`][`etats${session}`] = etats;
+    // Enregistrement des modifications
+    user = await user.save();
 
-    // Sauvegarder les modifications de l'utilisateur
-    await user.save();
-
-    // Répondre avec l'utilisateur mis à jour
-    res.status(200).json({ message: "Statut ajouté avec succès", user });
+    res.status(200).json({ message: "Date de statut ajoutée ou mise à jour avec succès." });
+  
   } catch (error) {
-    // Gérer les erreurs
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Une erreur s'est produite lors de l'ajout ou de la mise à jour de la date de statut.", error: error.message });
   }
 };
 
@@ -263,5 +285,5 @@ module.exports = {
   deleteUser,
   login,
   updateStatus,
-  addStatus
+  addOrUpdateStatusDate
 };

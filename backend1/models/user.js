@@ -8,38 +8,39 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, enum: ["professor", "student"], required: true },
   uId: { type: String, required: true, unique: true },
-  classe: { type:String},
-  date: {
-    type: Date,
-    default: Date.now // La valeur par défaut est la date actuelle
-},
+  classe: { type: String },
+  status: [{
+    dates: 
+    [{
+        date: { type: Date}, 
 
-  status: {
-    session1: {
-      room1: { type: String, default: "___" },
-      etats1: { type: String, default: "___" },
-      createdAt: { type: Date, default: Date.now },
-      updatedAt: { type: Date, default: Date.now },
-    },
-    session2: {
-      room2: { type: String, default: "___" },
-      etats2: { type: String, default: "___" },
-      createdAt: { type: Date, default: Date.now },
-      updatedAt: { type: Date, default: Date.now },
-    },
-    session3: {
-      room3: { type: String, default: "___" },
-      etats3: { type: String, default: "___" },
-      createdAt: { type: Date, default: Date.now },
-      updatedAt: { type: Date, default: Date.now },
-    },
-    session4: {
-      room4: { type: String, default: "___" },
-      etats4: { type: String, default: "___" },
-      createdAt: { type: Date, default: Date.now },
-      updatedAt: { type: Date, default: Date.now },
-    },
-  },
+        session1: {
+          room1: { type: String, default: "__" },
+          etats1: { type: String, default: "__" },
+          createdAt: { type: Date, default: Date.now },
+          updatedAt: { type: Date, default: Date.now },
+        },
+        session2: {
+          room2: { type: String, default: "__" },
+          etats2: { type: String, default: "__" },
+          createdAt: { type: Date, default: Date.now },
+          updatedAt: { type: Date, default: Date.now },
+        },
+        session3: {
+          room3: { type: String, default: "__" },
+          etats3: { type: String, default: "__" },
+          createdAt: { type: Date, default: Date.now },
+          updatedAt: { type: Date, default: Date.now },
+        },
+        session4: {
+          room4: { type: String, default: "__" },
+          etats4: { type: String, default: "__" },
+          createdAt: { type: Date, default: Date.now },
+          updatedAt: { type: Date, default: Date.now },
+        },
+      },
+    ]
+  }],
 });
 
 // Fonction de hachage du mot de passe avant de sauvegarder l'utilisateur
